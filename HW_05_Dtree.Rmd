@@ -1,0 +1,69 @@
+---
+title: "HW_05_Dtree"
+author: "Pavan Kalavakuri"
+date: "2022-11-08"
+output: html_document
+---
+# Clearing memory
+rm(list = ls())
+
+#install.packages("rpart")
+#install.packages("rpart.plot")
+#install.packages("RColorBrewer")
+#install.packages("rattle")
+library(rpart)
+library(rpart.plot)
+
+library(RColorBrewer)
+library(rattle)
+
+# Setting working directory
+setwd("~/Documents/Sem3/cs513/hw5")
+
+# Loading breast cancer data
+bcd <- read.csv("~/Documents/Sem3/cs513/hw5/breast-cancer-wisconsin.data.csv", na.string = "?")
+
+# Converting class into type factor
+bcd$Class<- factor(bcd$Class , levels = c("2","4") , labels = c("Benign","Malignant"))
+
+# Set seed to make partition reproducible
+set.seed(111)
+
+# Creating random indexes
+index <- sort(sample(nrow(bcd), as.integer((.30*nrow(bcd)))))
+
+# Loading training and testing data
+train_data <- bcd[-index,]
+test_data <- bcd[index,]
+
+# Decision tree
+#dev.off()
+cart_class <- rpart(Class~., data = train_data)
+summary(cart_class)
+
+# Plotting graphs
+rpart.plot(cart_class)
+
+# Scoring
+cart_prediction <- predict(cart_class, test_data, type = 'class')
+
+# Creating frequency table
+table(Actual = test_data[,11], Cart = cart_prediction)
+new_cart_prediction <- predict(cart_class, test_data)
+str(new_cart_prediction)
+cart_pred_catgry <- ifelse(new_cart_prediction[,1] <= .5, 'Malignant', 'Benign')
+table(Actual = test_data[,11], Cart = cart_pred_catgry)
+
+# Accuracy Percentage
+match <- (test_data[,11] == cart_prediction)* 100
+accuracy <- sum(match)/length(match)
+accuracy
+
+# Rate of error
+error <- sum(test_data[,11] != cart_prediction)
+error_rate <- error/length(test_data[,11])
+error_rate
+
+library(rpart.plot)
+prp(cart_class)
+fancyRpartPlot(cart_class)
